@@ -28,6 +28,7 @@ class MetaLearner:
         utl.seed(self.args.seed, self.args.deterministic_execution)
 
         # calculate number of updates and keep count of frames/iterations
+        print (args.policy_num_steps)
         self.num_updates = int(args.num_frames) // args.policy_num_steps // args.num_processes
         self.frames = 0
         self.iter_idx = -1
@@ -85,9 +86,12 @@ class MetaLearner:
         # initialise VAE and policy
         if self.args.init_model_path is not None:
             init_model_path = os.path.join(self.args.init_model_path, os.listdir(self.args.init_model_path)[-1])
-            init_model_path = os.path.join(init_model_path, os.listdir(init_model_path)[-1])
-            init_model_path = os.path.join(init_model_path, 'models')
-            self.args.init_model_path = init_model_path
+            for sub_folder in os.listdir(init_model_path):
+                if str(args.seed) in sub_folder:
+                    init_model_path = os.path.join(init_model_path, sub_folder)
+                    init_model_path = os.path.join(init_model_path, 'models')
+                    self.args.init_model_path = init_model_path
+                    print (self.args.init_model_path)
 
         self.vae = VaribadVAE(self.args, self.logger, lambda: self.iter_idx)
         self.policy_storage = self.initialise_policy_storage()
@@ -130,7 +134,7 @@ class MetaLearner:
                 init_std=self.args.policy_init_std,
             ).to(device)
         else:
-            policy_net = torch.load(os.path.join(self.args.init_model_path, 'policy.pt'), map_location=device)
+            policy_net = torch.load(os.path.join(self.args.init_model_path, 'policy.pt'), map_location=device).to(device)
 
         # initialise policy trainer
         if self.args.policy == 'a2c':
@@ -175,6 +179,7 @@ class MetaLearner:
 
         # reset environments
         prev_state, belief, task = utl.reset_env(self.envs, self.args)
+        print (self.envs.get_task())
 
         # insert initial observation / embeddings to rollout storage
         self.policy_storage.prev_state[0].copy_(prev_state)
@@ -283,9 +288,12 @@ class MetaLearner:
 
                 # check if we are pre-training the VAE
                 if self.args.pretrain_len > self.iter_idx:
+                    self.args.num_vae_updates_per_pretrain = 3
                     for p in range(self.args.num_vae_updates_per_pretrain):
                         self.vae.compute_vae_loss(update=True,
                                                   pretrain_index=self.iter_idx * self.args.num_vae_updates_per_pretrain + p)
+                    with torch.no_grad():
+                        self.log(None, None, start_time)
                 # otherwise do the normal update (policy + vae)
                 else:
 
@@ -501,7 +509,11 @@ class MetaLearner:
             self.logger.add('policy/value', run_stats[2].mean(), self.iter_idx)
 
             self.logger.add('encoder/latent_mean', torch.cat(self.policy_storage.latent_mean).mean(), self.iter_idx)
+            self.logger.add('encoder/latent_mean_final_0', self.policy_storage.latent_mean[-1][:, 0].mean(), self.iter_idx)
+            self.logger.add('encoder/latent_mean_final_1', self.policy_storage.latent_mean[-1][:, 1].mean(), self.iter_idx)
             self.logger.add('encoder/latent_logvar', torch.cat(self.policy_storage.latent_logvar).mean(), self.iter_idx)
+            self.logger.add('encoder/latent_logvar_final_0', self.policy_storage.latent_logvar[-1][:, 0].mean(), self.iter_idx)
+            self.logger.add('encoder/latent_logvar_final_1', self.policy_storage.latent_logvar[-1][:, 1].mean(), self.iter_idx)
 
             # log the average weights and gradients of all models (where applicable)
             for [model, name] in [

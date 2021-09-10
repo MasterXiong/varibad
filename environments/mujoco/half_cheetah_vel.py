@@ -25,6 +25,7 @@ class HalfCheetahVelEnv(HalfCheetahEnv):
     """
 
     def __init__(self, max_episode_steps=100, **kwargs):
+        self.args = kwargs['args']
         self.vel_lower_bound = kwargs['args'].vel_lower_bound
         self.set_task(self.sample_tasks(1)[0])
         self._max_episode_steps = max_episode_steps
@@ -58,6 +59,8 @@ class HalfCheetahVelEnv(HalfCheetahEnv):
 
     def sample_tasks(self, n_tasks):
         #return [random.uniform(0.0, 3.0) for _ in range(n_tasks)]
+        if self.args.single_task_mode:
+            random.seed(self.args.single_task_seed)
         return [random.uniform(self.vel_lower_bound, self.vel_lower_bound + 1) for _ in range(n_tasks)]
 
     def reset_task(self, task):
