@@ -88,7 +88,7 @@ class CheetahDirUniEnv(HalfCheetahDirEnv):
                                                            -np.ones(_ANT_DIR_ACTION_DIM-self.orig_action_dim))),
                                        high=np.concatenate((self.action_space.high,
                                                             np.ones(_ANT_DIR_ACTION_DIM-self.orig_action_dim))),
-                                       shape=(_ANT_DIR_ACTION_DIM,))
+                                       shape=None)
         # Note: the observation space is automatically generated from the _get_obs function, so we don't overwrite it
 
     def _get_obs(self):
