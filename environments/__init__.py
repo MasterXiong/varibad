@@ -9,8 +9,8 @@ register(
     'AntDir-v0',
     entry_point='environments.wrappers:mujoco_wrapper',
     kwargs={'entry_point': 'environments.mujoco.ant_dir:AntDirEnv',
-            'max_episode_steps': 200},
-    max_episode_steps=200
+            'max_episode_steps': 100},
+    max_episode_steps=100
 )
 
 register(
@@ -33,16 +33,16 @@ register(
     'HalfCheetahDir-v0',
     entry_point='environments.wrappers:mujoco_wrapper',
     kwargs={'entry_point': 'environments.mujoco.half_cheetah_dir:HalfCheetahDirEnv',
-            'max_episode_steps': 200},
-    max_episode_steps=200
+            'max_episode_steps': 100},
+    max_episode_steps=100
 )
 
 register(
     'HalfCheetahDirUni-v0',
     entry_point='environments.wrappers:mujoco_wrapper',
     kwargs={'entry_point': 'environments.mujoco.half_cheetah_dir:CheetahDirUniEnv',
-            'max_episode_steps': 200},
-    max_episode_steps=200
+            'max_episode_steps': 100},
+    max_episode_steps=100
 )
 
 register(
