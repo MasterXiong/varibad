@@ -28,7 +28,7 @@ class MetaLearner:
         utl.seed(self.args.seed, self.args.deterministic_execution)
 
         # calculate number of updates and keep count of frames/iterations
-        print (args.policy_num_steps)
+        print (args.policy_num_steps, args.num_processes)
         self.num_updates = int(args.num_frames) // args.policy_num_steps // args.num_processes
         self.frames = 0
         self.iter_idx = -1
@@ -185,6 +185,7 @@ class MetaLearner:
         self.policy_storage.prev_state[0].copy_(prev_state)
 
         # log once before training
+        self.best_return = -1000000.
         with torch.no_grad():
             self.log(None, None, start_time)
 
@@ -317,7 +318,7 @@ class MetaLearner:
         if not os.path.exists(save_path):
             os.mkdir(save_path)
 
-        idx_labels = ['']
+        idx_labels = []
         if self.args.save_intermediate_models:
             idx_labels.append(int(self.iter_idx))
 
@@ -456,6 +457,22 @@ class MetaLearner:
                   f"\n Mean return (train): {returns_avg[-1].item()} \n"
                   )
 
+            if returns_avg[-1].item() >= self.best_return:
+                self.best_return = returns_avg[-1].item()
+
+                save_path = os.path.join(self.logger.full_output_folder, 'models')
+                if not os.path.exists(save_path):
+                    os.mkdir(save_path)
+                
+                torch.save(self.policy.actor_critic, os.path.join(save_path, "policy.pt"))
+                torch.save(self.vae.encoder, os.path.join(save_path, "encoder.pt"))
+                if self.vae.state_decoder is not None:
+                    torch.save(self.vae.state_decoder, os.path.join(save_path, "state_decoder.pt"))
+                if self.vae.reward_decoder is not None:
+                    torch.save(self.vae.reward_decoder, os.path.join(save_path, "reward_decoder.pt"))
+                if self.vae.task_decoder is not None:
+                    torch.save(self.vae.task_decoder, os.path.join(save_path, "task_decoder.pt"))
+
         # --- save models ---
 
         if (self.iter_idx + 1) % self.args.save_interval == 0:
@@ -463,9 +480,9 @@ class MetaLearner:
             if not os.path.exists(save_path):
                 os.mkdir(save_path)
 
-            idx_labels = ['']
-            if self.args.save_intermediate_models:
-                idx_labels.append(int(self.iter_idx))
+            idx_labels = []
+            #if self.args.save_intermediate_models:
+            idx_labels.append(int(self.iter_idx))
 
             for idx_label in idx_labels:
 
