@@ -248,8 +248,14 @@ class Policy(nn.Module):
             # entropy of underlying dist (isn't correct but works well in practice)
             dist_entropy = dist.base_dist.entropy().mean()
         else:
-            action_log_probs = dist.log_probs(action)
-            dist_entropy = dist.entropy().mean()
+            action_log_probs_separate = dist.log_probs(action)
+            if self.args.env_name == 'HalfCheetahDirUni-v0':
+                action_log_probs = action_log_probs_separate[..., :6].sum(-1, keepdim=True)
+                dist_entropy = dist.entropy()
+                dist_entropy = dist_entropy[..., :6].sum(-1).mean()
+            else:
+                action_log_probs = action_log_probs_separate.sum(-1, keepdim=True)
+                dist_entropy = dist.entropy().sum(-1).mean()
 
         return value, action_log_probs, dist_entropy
 
@@ -266,10 +272,12 @@ FixedCategorical.mode = lambda self: self.probs.argmax(dim=-1, keepdim=True)
 
 FixedNormal = torch.distributions.Normal
 log_prob_normal = FixedNormal.log_prob
-FixedNormal.log_probs = lambda self, actions: log_prob_normal(self, actions).sum(-1, keepdim=True)
+FixedNormal.log_probs = lambda self, actions: log_prob_normal(self, actions)
+#FixedNormal.log_probs = lambda self, actions: log_prob_normal(self, actions).sum(-1, keepdim=True)
 
 entropy = FixedNormal.entropy
-FixedNormal.entropy = lambda self: entropy(self).sum(-1)
+FixedNormal.entropy = lambda self: entropy(self)
+#FixedNormal.entropy = lambda self: entropy(self).sum(-1)
 
 FixedNormal.mode = lambda self: self.mean
 
