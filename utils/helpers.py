@@ -189,7 +189,10 @@ def recompute_embeddings(
         # reset hidden state of the GRU when we reset the task
         h = encoder.reset_hidden(h, policy_storage.done[i + 1])
 
-        ts, tm, tl, h = encoder(policy_storage.actions.float()[i:i + 1],
+        action = policy_storage.actions.clone()
+        if policy_storage.args.env_name == 'HalfCheetahDirUni-v0':
+            action[..., -2:] = 0.
+        ts, tm, tl, h = encoder(action.float()[i:i + 1],
                                 policy_storage.next_state[i:i + 1],
                                 policy_storage.rewards_raw[i:i + 1],
                                 h,
