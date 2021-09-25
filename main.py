@@ -22,7 +22,7 @@ from config.mujoco import \
     args_ant_goal_humplik, \
     args_walker_multitask, args_walker_expert, args_walker_avg, args_walker_rl2, args_walker_varibad, \
     args_humanoid_dir_varibad, args_humanoid_dir_rl2, args_humanoid_dir_multitask, args_humanoid_dir_expert, \
-    args_cheetah_dir_uni_varibad, args_cheetah_dir_uni_rl2
+    args_cheetah_dir_uni_varibad, args_cheetah_dir_uni_rl2, args_cheetah_dir_uni_expert
 from environments.parallel_envs import make_vec_envs
 from learner import Learner
 from metalearner import MetaLearner
@@ -77,6 +77,8 @@ def main():
         args = args_cheetah_dir_uni_varibad.get_args(rest_args)
     elif env == 'cheetah_dir_uni_rl2':
         args = args_cheetah_dir_uni_rl2.get_args(rest_args)
+    elif env == 'cheetah_dir_uni_expert':
+        args = args_cheetah_dir_uni_expert.get_args(rest_args)
     #
     # - CheetahVel -
     elif env == 'cheetah_vel_multitask':
