@@ -266,12 +266,16 @@ class MetaLearner:
                 # bad_mask is true if episode ended because time limit was reached
                 bad_masks = torch.FloatTensor([[0.0] if 'bad_transition' in info.keys() else [1.0] for info in infos]).to(device)
 
+                action_for_vae = action.clone()
+                if self.args.env_name == 'HalfCheetahDirUni-v0':
+                    action_for_vae[..., -2:] = 0.
+
                 with torch.no_grad():
                     # compute next embedding (for next loop and/or value prediction bootstrap)
                     latent_sample, latent_mean, latent_logvar, hidden_state = utl.update_encoding(
                         encoder=self.vae.encoder,
                         next_obs=next_state,
-                        action=action,
+                        action=action_for_vae,
                         reward=rew_raw,
                         done=done,
                         hidden_state=hidden_state)
@@ -280,7 +284,7 @@ class MetaLearner:
                 # (last state might include useful task info)
                 if not (self.args.disable_decoder and self.args.disable_kl_term):
                     self.vae.rollout_storage.insert(prev_state.clone(),
-                                                    action.detach().clone(),
+                                                    action_for_vae.detach().clone(),
                                                     next_state.clone(),
                                                     rew_raw.clone(),
                                                     done.clone(),

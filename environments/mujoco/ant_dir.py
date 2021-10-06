@@ -11,6 +11,7 @@ class AntDirEnv(AntEnv):
     """
 
     def __init__(self, max_episode_steps=200, **kwargs):
+        self.args = kwargs['args']
         self.set_task(self.sample_tasks(1)[0])
         self._max_episode_steps = max_episode_steps
         self.task_dim = 1
@@ -46,7 +47,10 @@ class AntDirEnv(AntEnv):
 
     def sample_tasks(self, n_tasks):
         # for fwd/bwd env, goal direc is backwards if - 1.0, forwards if + 1.0
-        return [random.choice([-1.0, 1.0]) for _ in range(n_tasks, )]
+        if self.args.single_task_mode:
+            return [float(self.args.single_task_seed) for _ in range(n_tasks, )]
+        else:
+            return [random.choice([-1.0, 1.0]) for _ in range(n_tasks, )]
 
     def set_task(self, task):
         if isinstance(task, np.ndarray):

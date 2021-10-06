@@ -104,4 +104,9 @@ class CheetahDirUniEnv(HalfCheetahDirEnv):
     def step(self, action):
         # remove unused zeros
         action = action[:self.orig_action_dim]
-        return super().step(action)
+        # execute action
+        observation, reward, done, infos = super().step(action)
+        # add control cost to unused actions
+        #ctrl_cost_extra = 0.5 * 1e-1 * np.sum(np.square(action[self.orig_action_dim:]))
+        #return observation, reward + ctrl_cost_extra, done, infos
+        return observation, reward, done, infos
