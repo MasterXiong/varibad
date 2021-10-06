@@ -181,7 +181,45 @@ class MetaLearner:
         prev_state, belief, task = utl.reset_env(self.envs, self.args)
         print (self.envs.get_task())
 
+        # replace the initial hidden state with the final hidden state of the first meta-episode if needed
+        latent_sample, latent_mean, latent_logvar, hidden_state = self.vae.encoder.prior(self.args.num_processes)
+        state = prev_state
+
+        for episode_idx in range(self.args.max_rollouts_per_task):
+
+            for step_idx in range(self.envs._max_episode_steps):
+
+                with torch.no_grad():
+                    _, action = utl.select_action(args=self.args,
+                                                  policy=self.policy,
+                                                  state=state,
+                                                  belief=belief,
+                                                  task=task,
+                                                  latent_sample=latent_sample,
+                                                  latent_mean=latent_mean,
+                                                  latent_logvar=latent_logvar,
+                                                  deterministic=True)
+
+                # observe reward and next obs
+                [state, belief, task], (rew_raw, rew_normalised), done, infos = utl.env_step(self.envs, action, self.args)
+                done_mdp = [info['done_mdp'] for info in infos]
+
+                with torch.no_grad():
+                    # update the hidden state
+                    latent_sample, latent_mean, latent_logvar, hidden_state = utl.update_encoding(encoder=self.vae.encoder,
+                                                                                                  next_obs=state,
+                                                                                                  action=action,
+                                                                                                  reward=rew_raw,
+                                                                                                  done=None,
+                                                                                                  hidden_state=hidden_state)
+
+                if np.sum(done) > 0:
+                    done_indices = np.argwhere(done.flatten()).flatten()
+                    state, belief, task = utl.reset_env(self.envs, self.args, indices=done_indices, state=state)
+        self.vae.encoder.initial_hidden_state = hidden_state.detach().clone()
+
         # insert initial observation / embeddings to rollout storage
+        prev_state, belief, task = utl.reset_env(self.envs, self.args)
         self.policy_storage.prev_state[0].copy_(prev_state)
 
         # log once before training

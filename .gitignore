@@ -2,7 +2,13 @@
 *.pyc
 __pycache__
 .idea
+*.pkl
+*.zip
+*.png
 
 logs/
 scripts/
 docker/
+varibad-*/
+rl2-*/
+expert-*/

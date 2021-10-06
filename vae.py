@@ -78,6 +78,7 @@ class VaribadVAE:
             ).to(device)
         else:
             encoder = torch.load(os.path.join(self.args.init_model_path, 'encoder.pt'), map_location=device)
+            encoder.args = self.args
         return encoder
 
     def initialise_decoder(self):
@@ -106,6 +107,7 @@ class VaribadVAE:
                 ).to(device)
             else:
                 state_decoder = torch.load(os.path.join(self.args.init_model_path, 'state_decoder.pt'), map_location=device)
+                encoder.args = self.args
         else:
             state_decoder = None
 
@@ -128,6 +130,7 @@ class VaribadVAE:
                 ).to(device)
             else:
                 reward_decoder = torch.load(os.path.join(self.args.init_model_path, 'reward_decoder.pt'), map_location=device)
+                encoder.args = self.args
         else:
             reward_decoder = None
 

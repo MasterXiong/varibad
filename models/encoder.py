@@ -87,7 +87,10 @@ class RNNEncoder(nn.Module):
                 done = done.unsqueeze(0)
             elif done.dim() == 1:
                 done = done.unsqueeze(0).unsqueeze(2)
-        hidden_state = hidden_state * (1 - done)
+        if self.args.default_prior:
+            hidden_state = hidden_state * (1 - done)
+        else:
+            hidden_state = hidden_state * (1 - done) + self.initial_hidden_state * done            
         return hidden_state
 
     def prior(self, batch_size, sample=True):
@@ -95,7 +98,15 @@ class RNNEncoder(nn.Module):
         # TODO: add option to incorporate the initial state
 
         # we start out with a hidden state of zero
-        hidden_state = torch.zeros((1, batch_size, self.hidden_size), requires_grad=True).to(device)
+        if self.args.default_prior:
+            hidden_state = torch.zeros((1, batch_size, self.hidden_size), requires_grad=True).to(device)
+        else:
+            try:
+                hidden_state = self.initial_hidden_state[:, :batch_size, :].clone()
+                hidden_state.requires_grad = True
+                hidden_state = hidden_state.to(device)
+            except:
+                hidden_state = torch.zeros((1, batch_size, self.hidden_size), requires_grad=True).to(device)
 
         h = hidden_state
         # forward through fully connected layers after GRU

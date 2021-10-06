@@ -4,6 +4,7 @@ Takes a flag --env-type (see below for choices) and loads the parameters from th
 """
 import argparse
 import warnings
+from utils.helpers import boolean_argument
 
 import numpy as np
 import torch
@@ -34,9 +35,11 @@ def main():
     # continue training an existing model
     parser.add_argument('--init_model_path', type=str, default=None)
     parser.add_argument('--single_task_seed', type=int, default=0)
+    parser.add_argument('--default_prior', type=boolean_argument, default=True)
     args, rest_args = parser.parse_known_args()
     init_model_path = args.init_model_path
     single_task_seed = args.single_task_seed
+    default_prior = args.default_prior
     env = args.env_type
 
     # --- GridWorld ---
@@ -138,6 +141,7 @@ def main():
 
     args.init_model_path = init_model_path
     args.single_task_seed = single_task_seed
+    args.default_prior = default_prior
 
     # warning for deterministic execution
     if args.deterministic_execution:
